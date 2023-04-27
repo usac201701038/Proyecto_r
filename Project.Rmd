@@ -1,0 +1,107 @@
+---
+title: "Proyecto"
+---
+1. Conociendo los datos
+```{r}
+#1.1. 
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+#1.2. 
+yearly <- read_csv("deaths_handwashing.csv")
+#1.3
+yearly
+```
+
+2. El alarmante número de muertes
+```{r}
+#2.1
+yearly <- yearly %>% 
+  mutate(proportion_deaths = round((deaths / births) * 100, 2))
+#2.2
+yearly 
+```
+3. Muerte en las clínicas
+```{r}
+#3.1 y 3.2
+ggplot(yearly, aes(x = year, y = proportion_deaths)) +
+  geom_line(aes(color = clinic)) +
+  labs(title = "Proporción de muertes por número de nacimientos en porcentaje ",
+       x = "Año", y = "Proporción de muertes")
+```
+4. Comienza el lavado de manos
+```{r}
+#4.1
+monthly <- read_csv("deaths_clinic_1.csv")
+#4.2
+monthly <- monthly %>%
+  mutate(proportion_deaths = round((deaths / births) * 100, 2))
+#4.3
+head(monthly)
+```
+
+5. El efecto del lavado de manos
+
+```{r}
+#5.1
+ggplot(monthly, aes(x = date, y = proportion_deaths, color= deaths)) +geom_line()
+#5.2
+ggplot(monthly, aes(x = date, y = proportion_deaths, color= deaths)) +
+  geom_line() +
+  labs(x = "Fecha", y = "Proporción de muertes por número de nacimientos")
+#5.3 se cambia el valor de date a year para solo mostrar el año 
+death_by_year <- monthly %>%
+  mutate(year = year(date)) %>%
+  group_by(year) %>%
+  summarise(mean_proportion_deaths = mean(proportion_deaths))
+death_by_year
+
+
+#5.4
+ggplot(death_by_year, aes(x = year, y = mean_proportion_deaths)) +
+  geom_bar(stat = "identity", fill = "cadetblue") +
+  labs(title = "Proporción de muertes por año", x = "Año", y = "Media de proporción de muertes")
+```
+
+6. Los resultados del lavado de manos
+```{r}
+#6.1
+monthly <- monthly %>% 
+  mutate(handwashing_started = ifelse(date >= "1847-01-01", TRUE, FALSE))
+#6.2
+ggplot(monthly, aes(x = date, y = proportion_deaths, color = handwashing_started)) +
+  geom_line()
+#6.3
+ggplot(monthly, aes(x = date, y = proportion_deaths, color = handwashing_started)) +
+  geom_line() +
+  labs(x = "Fecha", y = "Proporción de muertes")
+
+```
+
+7. ¿Más lavado de manos, menos muertes?
+```{r}
+
+#7.1 & 7.2 &7.3
+month_summary <- monthly %>%
+                  group_by(handwashing_started) %>%
+                  summarise(avg_proportion_deaths = mean(proportion_deaths)) %>%
+                  mutate(avg_proportion_deaths = round(avg_proportion_deaths, 2))
+
+# se redondeo el resultado ya que es el promedio de los porcentajes 
+month_summary
+
+
+
+```
+8. Análisis estadístico de los datos de lavado de manos
+
+```{r}
+
+t.test(proportion_deaths ~ handwashing_started, data = monthly, conf.level = 0.95)
+#Con un 95% de confianza podemos decir que el lavado de manos tuvo 
+# un efecto significativo en la reducción de la proporción de 
+#muertes en un hospital ya que la diferencia entre las medias de 
+#proporcion de muertes antes y despues del lavado de manso es de 5.29% y 9.74%
+
+```
+
